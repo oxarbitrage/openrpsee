@@ -9,6 +9,8 @@ use std::{
 
 use quote::ToTokens;
 
+pub mod openrpc;
+
 /// ...
 pub fn generate_rpc_openrpc(json_rpc_methods_rs: &str, out_dir: &Path) -> Result<(), Box<dyn Error>> {
     // Parse the source file containing the `Rpc` trait.

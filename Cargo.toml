@@ -9,3 +9,10 @@ edition = "2024"
 quote = "1"
 syn = { version = "2", features = ["full"] }
 
+documented = "0.9"
+jsonrpsee = { version = "0.24", features = ["macros", "server"] }
+schemars = "1"
+serde = { version = "1", features = ["serde_derive"] }
+serde_json = { version = "1", features = ["arbitrary_precision", "raw_value"] }
+
+
