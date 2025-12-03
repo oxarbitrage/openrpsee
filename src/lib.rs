@@ -30,7 +30,8 @@ pub fn generate_rpc_openrpc(json_rpc_methods_rs: &str, out_dir: &Path) -> Result
             syn::Item::Trait(item_trait) if item_trait.ident == "WalletRpc" => Some(item_trait),
             _ => None,
         })
-        .expect("present");
+        .cloned()
+        .unwrap_or_else(|| syn::parse_str::<syn::ItemTrait>("trait WalletRpc {}").unwrap());
 
     let mut contents = "#[allow(unused_qualifications)]
 pub(super) static METHODS: ::phf::Map<&str, RpcMethod> = ::phf::phf_map! {
