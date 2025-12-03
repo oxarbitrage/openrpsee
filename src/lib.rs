@@ -11,6 +11,8 @@ use quote::ToTokens;
 
 pub mod openrpc;
 
+pub use openrpc::*;
+
 /// ...
 pub fn generate_rpc_openrpc(json_rpc_methods_rs: &str, out_dir: &Path) -> Result<(), Box<dyn Error>> {
     // Parse the source file containing the `Rpc` trait.
@@ -36,7 +38,7 @@ pub fn generate_rpc_openrpc(json_rpc_methods_rs: &str, out_dir: &Path) -> Result
         .unwrap_or_else(|| syn::parse_str::<syn::ItemTrait>("trait WalletRpc {}").unwrap());
 
     let mut contents = "#[allow(unused_qualifications)]
-pub(super) static METHODS: ::phf::Map<&str, RpcMethod> = ::phf::phf_map! {
+pub static METHODS: ::phf::Map<&str, RpcMethod> = ::phf::phf_map! {
 "
     .to_string();
 
@@ -153,8 +155,9 @@ pub(super) static METHODS: ::phf::Map<&str, RpcMethod> = ::phf::phf_map! {
                     contents.push_str(&schema_ty);
                     contents.push_str(">(\"");
                     contents.push_str(&parameter);
-                    contents.push_str("\", super::");
-                    contents.push_str(&module);
+                    //contents.push_str("\", self::");
+                    //contents.push_str(&module);
+                    contents.push_str("\", crate::methods");
                     contents.push_str("::PARAM_");
                     contents.push_str(&param_upper);
                     contents.push_str("_DESC, ");
@@ -162,7 +165,7 @@ pub(super) static METHODS: ::phf::Map<&str, RpcMethod> = ::phf::phf_map! {
                         Some(required) => contents.push_str(&required.to_string()),
                         None => {
                             // Require a helper const to be present.
-                            contents.push_str("super::");
+                            contents.push_str("self::");
                             contents.push_str(&module);
                             contents.push_str("::PARAM_");
                             contents.push_str(&param_upper);
@@ -173,8 +176,8 @@ pub(super) static METHODS: ::phf::Map<&str, RpcMethod> = ::phf::phf_map! {
                 }
                 contents.push_str("    ],\n");
 
-                contents.push_str("    result: |g| g.result::<super::");
-                contents.push_str(&module);
+                contents.push_str("    result: |g| g.result::<openrpsee::openrpc");
+                //contents.push_str(&module);
                 contents.push_str("::ResultType>(\"");
                 contents.push_str(&command);
                 contents.push_str("_result\"),\n");

@@ -14,14 +14,14 @@ pub type ResultType = OpenRpc;
 
 /// Static information about a Zallet JSON-RPC method.
 pub struct RpcMethod {
-    pub(super) description: &'static str,
-    params: fn(&mut Generator) -> Vec<ContentDescriptor>,
-    result: fn(&mut Generator) -> ContentDescriptor,
-    deprecated: bool,
+    pub description: &'static str,
+    pub params: fn(&mut Generator) -> Vec<ContentDescriptor>,
+    pub result: fn(&mut Generator) -> ContentDescriptor,
+    pub deprecated: bool,
 }
 
 impl RpcMethod {
-    fn generate(&self, generator: &mut Generator, name: &'static str) -> Method {
+    pub fn generate(&self, generator: &mut Generator, name: &'static str) -> Method {
         let description = self.description.trim();
 
         Method {
@@ -39,12 +39,12 @@ impl RpcMethod {
 }
 
 /// An OpenRPC document generator.
-pub(super) struct Generator {
+pub struct Generator {
     inner: SchemaGenerator,
 }
 
 impl Generator {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             inner: SchemaSettings::draft07()
                 .with(|s| {
@@ -55,7 +55,7 @@ impl Generator {
     }
 
     /// Constructs the descriptor for a JSON-RPC method parameter.
-    pub(super) fn param<T: JsonSchema>(
+    pub fn param<T: JsonSchema>(
         &mut self,
         name: &'static str,
         description: &'static str,
@@ -75,7 +75,7 @@ impl Generator {
     }
 
     /// Constructs the descriptor for a JSON-RPC method's result type.
-    pub(super) fn result<T: Documented + JsonSchema>(
+    pub fn result<T: Documented + JsonSchema>(
         &mut self,
         name: &'static str,
     ) -> ContentDescriptor {
@@ -92,7 +92,7 @@ impl Generator {
         }
     }
 
-    fn into_components(mut self) -> Components {
+    pub fn into_components(mut self) -> Components {
         Components {
             schemas: self.inner.take_definitions(false),
         }
@@ -102,10 +102,10 @@ impl Generator {
 /// An OpenRPC document.
 #[derive(Clone, Debug, Serialize, Documented)]
 pub struct OpenRpc {
-    openrpc: &'static str,
-    info: Info,
-    methods: Vec<Method>,
-    components: Components,
+    pub openrpc: &'static str,
+    pub info: Info,
+    pub methods: Vec<Method>,
+    pub components: Components,
 }
 
 impl JsonSchema for OpenRpc {
@@ -121,14 +121,14 @@ impl JsonSchema for OpenRpc {
 }
 
 #[derive(Clone, Debug, Serialize)]
-struct Info {
-    title: &'static str,
-    description: &'static str,
-    version: &'static str,
+pub struct Info {
+    pub title: &'static str,
+    pub description: &'static str,
+    pub version: &'static str,
 }
 
 #[derive(Clone, Debug, Serialize)]
-pub(super) struct Method {
+pub struct Method {
     name: &'static str,
     summary: &'static str,
     description: &'static str,
@@ -139,7 +139,7 @@ pub(super) struct Method {
 }
 
 #[derive(Clone, Debug, Serialize)]
-pub(super) struct ContentDescriptor {
+pub struct ContentDescriptor {
     name: &'static str,
     summary: &'static str,
     description: &'static str,
@@ -151,7 +151,7 @@ pub(super) struct ContentDescriptor {
 }
 
 #[derive(Clone, Debug, Serialize)]
-struct Components {
+pub struct Components {
     schemas: serde_json::Map<String, JsonValue>,
 }
 
