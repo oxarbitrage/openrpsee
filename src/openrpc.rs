@@ -7,6 +7,11 @@ use jsonrpsee::core::{JsonValue, RpcResult};
 use schemars::{JsonSchema, Schema, SchemaGenerator, generate::SchemaSettings};
 use serde::Serialize;
 
+
+/// Response to an `rpc.discover` RPC request.
+pub type Response = RpcResult<ResultType>;
+pub type ResultType = OpenRpc;
+
 /// Static information about a Zallet JSON-RPC method.
 pub struct RpcMethod {
     pub(super) description: &'static str,
@@ -96,7 +101,7 @@ impl Generator {
 
 /// An OpenRPC document.
 #[derive(Clone, Debug, Serialize, Documented)]
-pub(crate) struct OpenRpc {
+pub struct OpenRpc {
     openrpc: &'static str,
     info: Info,
     methods: Vec<Method>,
