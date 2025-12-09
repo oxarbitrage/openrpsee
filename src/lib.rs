@@ -1,20 +1,21 @@
+//! Utilities for generating OpenRPC documents.
 //!
-//! 
+//! This module provides functionality to generate OpenRPC documents
+//! in projects that uses the `jsonrpsee` crate for JSON-RPC method definitions.
 
-use std::{
-    error::Error,
-    fs,
-    path::Path,
-};
+use std::{error::Error, fs, path::Path};
 
 use quote::ToTokens;
 
 pub mod openrpc;
 
-pub use openrpc::*;
-
-/// ...
-pub fn generate_rpc_openrpc(json_rpc_methods_rs: &str, out_dir: &Path) -> Result<(), Box<dyn Error>> {
+/// Generates a lookup table for the JSON-RPC methods defined in the given source file.
+///
+/// This function is meant to be used in the build script (`build.rs`) of a project.
+pub fn generate_rpc_openrpc(
+    json_rpc_methods_rs: &str,
+    out_dir: &Path,
+) -> Result<(), Box<dyn Error>> {
     // Parse the source file containing the `Rpc` trait.
     let methods_rs = fs::read_to_string(json_rpc_methods_rs)?;
     let methods_ast = syn::parse_file(&methods_rs)?;
@@ -37,7 +38,8 @@ pub fn generate_rpc_openrpc(json_rpc_methods_rs: &str, out_dir: &Path) -> Result
         .cloned()
         .unwrap_or_else(|| syn::parse_str::<syn::ItemTrait>("trait WalletRpc {}").unwrap());
 
-    let mut contents = "#[allow(unused_qualifications)]
+    let mut contents = "/// Lookup table for JSON-RPC methods.
+#[allow(unused_qualifications)]
 pub static METHODS: ::phf::Map<&str, RpcMethod> = ::phf::phf_map! {
 "
     .to_string();
