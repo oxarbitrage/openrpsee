@@ -17,7 +17,7 @@ pub fn generate_rpc_openrpc(
     trait_names: &[&str],
     out_dir: &Path,
 ) -> Result<(), Box<dyn Error>> {
-    // Parse the source file containing the `Rpc` trait.
+    // Parse the source file containing the requested traits.
     let methods_rs = fs::read_to_string(json_rpc_methods_rs)?;
     let methods_ast = syn::parse_file(&methods_rs)?;
 
