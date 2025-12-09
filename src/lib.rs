@@ -14,29 +14,29 @@ pub mod openrpc;
 /// This function is meant to be used in the build script (`build.rs`) of a project.
 pub fn generate_rpc_openrpc(
     json_rpc_methods_rs: &str,
+    trait_names: &[&str],
     out_dir: &Path,
 ) -> Result<(), Box<dyn Error>> {
     // Parse the source file containing the `Rpc` trait.
     let methods_rs = fs::read_to_string(json_rpc_methods_rs)?;
     let methods_ast = syn::parse_file(&methods_rs)?;
 
-    let rpc_trait = methods_ast
-        .items
+    // Collect references to all requested traits.
+    let traits: Vec<&syn::ItemTrait> = trait_names
         .iter()
-        .find_map(|item| match item {
-            syn::Item::Trait(item_trait) if item_trait.ident == "Rpc" => Some(item_trait),
-            _ => None,
+        .map(|name| {
+            methods_ast
+                .items
+                .iter()
+                .find_map(|item| match item {
+                    syn::Item::Trait(item_trait) if item_trait.ident == *name => Some(item_trait),
+                    _ => None,
+                })
+                .unwrap_or_else(|| {
+                    panic!("trait `{name}` must be present in {json_rpc_methods_rs}")
+                })
         })
-        .expect("present");
-    let wallet_rpc_trait = methods_ast
-        .items
-        .iter()
-        .find_map(|item| match item {
-            syn::Item::Trait(item_trait) if item_trait.ident == "WalletRpc" => Some(item_trait),
-            _ => None,
-        })
-        .cloned()
-        .unwrap_or_else(|| syn::parse_str::<syn::ItemTrait>("trait WalletRpc {}").unwrap());
+        .collect();
 
     let mut contents = "/// Lookup table for JSON-RPC methods.
 #[allow(unused_qualifications)]
@@ -44,7 +44,7 @@ pub static METHODS: ::phf::Map<&str, RpcMethod> = ::phf::phf_map! {
 "
     .to_string();
 
-    for item in rpc_trait.items.iter().chain(&wallet_rpc_trait.items) {
+    for item in traits.iter().flat_map(|tr| tr.items.iter()) {
         if let syn::TraitItem::Fn(method) = item {
             // Find methods via their `#[method(name = "command")]` attribute.
             let mut command = None;
