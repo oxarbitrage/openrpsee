@@ -1,6 +1,6 @@
 //! Utilities for generating OpenRPC documents.
 //!
-//! This module provides functionality to generate OpenRPC documents
+//! This crate provides utilities to generate OpenRPC documents
 //! in projects that uses the `jsonrpsee` crate for JSON-RPC method definitions.
 
 use std::{error::Error, fs, path::Path};
@@ -15,6 +15,7 @@ pub mod openrpc;
 pub fn generate_rpc_openrpc(
     json_rpc_methods_rs: &str,
     trait_names: &[&str],
+    is_zallet: bool,
     out_dir: &Path,
 ) -> Result<(), Box<dyn Error>> {
     // Parse the source file containing the requested traits.
@@ -40,7 +41,7 @@ pub fn generate_rpc_openrpc(
 
     let mut contents = "/// Lookup table for JSON-RPC methods.
 #[allow(unused_qualifications)]
-pub static METHODS: ::phf::Map<&str, RpcMethod> = ::phf::phf_map! {
+pub static METHODS: ::phf::Map<&str, openrpsee::openrpc::RpcMethod> = ::phf::phf_map! {
 "
     .to_string();
 
@@ -124,7 +125,7 @@ pub static METHODS: ::phf::Map<&str, RpcMethod> = ::phf::phf_map! {
 
                 contents.push('"');
                 contents.push_str(&command);
-                contents.push_str("\" => RpcMethod {\n");
+                contents.push_str("\" => openrpsee::openrpc::RpcMethod {\n");
 
                 contents.push_str("    description: \"");
                 for attr in method
@@ -157,9 +158,12 @@ pub static METHODS: ::phf::Map<&str, RpcMethod> = ::phf::phf_map! {
                     contents.push_str(&schema_ty);
                     contents.push_str(">(\"");
                     contents.push_str(&parameter);
-                    //contents.push_str("\", self::");
-                    //contents.push_str(&module);
-                    contents.push_str("\", crate::methods");
+                    if is_zallet {
+                        contents.push_str("\", super::");
+                        contents.push_str(&module);
+                    } else {
+                        contents.push_str("\", crate::methods");
+                    }
                     contents.push_str("::PARAM_");
                     contents.push_str(&param_upper);
                     contents.push_str("_DESC, ");
@@ -167,7 +171,11 @@ pub static METHODS: ::phf::Map<&str, RpcMethod> = ::phf::phf_map! {
                         Some(required) => contents.push_str(&required.to_string()),
                         None => {
                             // Require a helper const to be present.
-                            contents.push_str("self::");
+                            if is_zallet {
+                                contents.push_str("super::");
+                            } else {
+                                contents.push_str("crate::methods::");
+                            }
                             contents.push_str(&module);
                             contents.push_str("::PARAM_");
                             contents.push_str(&param_upper);
@@ -179,7 +187,6 @@ pub static METHODS: ::phf::Map<&str, RpcMethod> = ::phf::phf_map! {
                 contents.push_str("    ],\n");
 
                 contents.push_str("    result: |g| g.result::<openrpsee::openrpc");
-                //contents.push_str(&module);
                 contents.push_str("::ResultType>(\"");
                 contents.push_str(&command);
                 contents.push_str("_result\"),\n");
