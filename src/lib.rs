@@ -12,10 +12,10 @@ pub mod openrpc;
 /// Generates a lookup table for the JSON-RPC methods defined in the given source file.
 ///
 /// This function is meant to be used in the build script (`build.rs`) of a project.
-pub fn generate_rpc_openrpc(
+pub fn generate_openrpc(
     json_rpc_methods_rs: &str,
     trait_names: &[&str],
-    is_zallet: bool,
+    use_parent_module: bool,
     out_dir: &Path,
 ) -> Result<(), Box<dyn Error>> {
     // Parse the source file containing the requested traits.
@@ -158,7 +158,7 @@ pub static METHODS: ::phf::Map<&str, openrpsee::openrpc::RpcMethod> = ::phf::phf
                     contents.push_str(&schema_ty);
                     contents.push_str(">(\"");
                     contents.push_str(&parameter);
-                    if is_zallet {
+                    if use_parent_module {
                         contents.push_str("\", super::");
                         contents.push_str(&module);
                     } else {
@@ -171,7 +171,7 @@ pub static METHODS: ::phf::Map<&str, openrpsee::openrpc::RpcMethod> = ::phf::phf
                         Some(required) => contents.push_str(&required.to_string()),
                         None => {
                             // Require a helper const to be present.
-                            if is_zallet {
+                            if use_parent_module {
                                 contents.push_str("super::");
                             } else {
                                 contents.push_str("crate::methods::");
